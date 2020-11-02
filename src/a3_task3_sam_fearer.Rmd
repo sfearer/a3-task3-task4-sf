@@ -1,0 +1,132 @@
+---
+title: "a3_task3_sam_fearer"
+author: "Sam Fearer"
+date: "10/30/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE, echo = TRUE, message = FALSE, warning = FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(here)
+library(janitor)
+library(lubridate)
+library(scales)
+```
+
+## SECTION ONE
+## Read in the urchin data and clean names
+
+```{r}
+urchin = read_csv(here("data","urchins.csv")) %>% 
+  clean_names()
+  
+```
+
+
+## Exploratory data viz for comparison of red and purple urchins, by size
+
+```{r}
+
+#histogram
+ggplot(data = urchin, (aes(x = size))) +
+  geom_histogram() + 
+  facet_wrap(~common_name)
+
+#boxplot
+ggplot(data = urchin, (aes(x = common_name, y = size))) +
+  geom_boxplot()
+```
+
+
+## Descriptive statistics table (presenting: mean, median, standard deviation, sample size)
+
+```{r}
+
+urchin_stats <- urchin %>% 
+  group_by(common_name) %>% 
+  summarize(mean_size = mean(size),
+            median_size = median(size),
+            sd_size = sd(size),
+            sample_size = n())
+
+```
+
+## Size comparison, using statistics from graphs and from "urchin_stats":
+> The red urchin sample had a larger mean and median size (roughly 2.3cm, or 40%, larger) than that of purple urchins. However, the red urchin sample had a smaller sample size (approximately 15% smaller), and more viariance from the mean (the standard deviation of the red urchin set was almost 40% larger than that of the purple urchin set). Given these figures, we can understand the red urchins in question to have a larger average size, but more variability between individual samples. That said, it is the red urchin dataset that most resembles a normal distribution. 
+
+## SECTION TWO
+
+## Explore purple urchin data by site and year
+
+```{r}
+
+purple_urchins <- urchin %>% 
+  filter(common_name == "Purple Urchin") %>% 
+  mutate(date_new = mdy(date)) %>% 
+  mutate(year_new = year(date_new)) %>% 
+  mutate(site_full = case_when(
+    site == "NAPL" ~ "Naples Reef",
+    site == "AQUE" ~ "Arroyo Quemado Reef",
+    site == "CARP" ~ "Carpinteria Reef",
+    site == "MOHK" ~ "Mohawk Reef",
+    site == "IVEE" ~ "Isla Vista Reef"
+  ) )
+
+
+```
+
+## Summary table and graph for purple urchin data
+
+```{r}
+#summary table
+#purple_urchin_summary <- purple_urchins %>% 
+#  select("year_new", "site_full")
+
+  
+#graph from table data
+#ggplot(data = purple_urchin_summary, aes(x = year_new, color = site_full)) +
+ # geom_histogram(bins = 30) +
+ # facet_wrap(~site_full)
+
+
+
+#summary table
+purple_urchin_summary <- purple_urchins %>% 
+  select("year_new", "site_full") %>% 
+  count(site_full, year_new)
+
+  
+#graph from table data
+ggplot(data = purple_urchin_summary, aes(x = year_new, y = n, color = site_full)) +
+  geom_col(bins = 30) +
+  facet_wrap(~site_full)
+  
+  
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
