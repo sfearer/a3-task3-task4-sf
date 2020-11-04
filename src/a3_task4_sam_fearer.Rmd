@@ -1,0 +1,99 @@
+---
+title: "a3_task4_sam_fearer"
+author: "Sam Fearer"
+date: "11/3/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE, echo = TRUE, message = FALSE, warning = FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(here)
+library(janitor)
+library(lubridate)
+library(scales)
+```
+
+
+## Read in the urchin data and clean names
+
+```{r}
+
+urchin = read_csv(here("data","urchins.csv")) %>% 
+  clean_names()
+
+```
+
+## Create purple urchin subset for Naples 2010 data
+
+```{r}
+urchin_purp_naples_2010 <- urchin %>% 
+  filter(common_name == "Purple Urchin") %>% 
+   mutate(date_new = mdy(date)) %>%
+   mutate(year_new = year(date_new)) %>%
+   mutate(month_new = month(date_new)) %>% 
+   mutate(site_full = case_when(site == "NAPL" ~ "Naples Reef")) %>% 
+  filter(month_new == "1", year_new == "2010", site_full == "Naples Reef")
+```
+
+## Create graphs to compare treatment variable
+
+```{r}
+ggplot(data = urchin_purp_naples_2010, aes(x = size)) +
+  geom_histogram(bins = 15) +
+  facet_wrap(~treatment)
+
+ggplot(data = urchin_purp_naples_2010, aes(sample = size)) +
+  geom_qq() +
+  facet_wrap(~treatment)
+```
+
+> Annual and Control group urchin distributions appear to be linear in the QQ plots, but the distributions do not appear bell-shaped (normal) in the histograms. The histogram distribution is more bell-shaped for the Control group than for the Annual group, but not by very much.  
+
+
+## Create a table with descriptive statistics for both groups
+
+```{r}
+urchin_stats <- urchin_purp_naples_2010 %>% 
+  group_by(treatment) %>% 
+  summarize(
+    mean_size = mean(size),
+    sd_size = sd(size),
+    sample_size = n())
+
+urchin_stats
+```
+
+
+## Pull vectors for data analysis
+```{r}
+annual_sample <- urchin_purp_naples_2010 %>% 
+  filter(treatment == "ANNUAL") %>% 
+  pull(size)
+
+control_sample <- urchin_purp_naples_2010 %>% 
+  filter(treatment == "CONTROL") %>% 
+  pull(size)
+
+```
+
+
+## Run a two-sample t-test for the two groups (annual and control)
+
+```{r}
+t.test(annual_sample, control_sample)
+
+```
+
+> The Annual sample had a mean of 3.92 and the Control sample had a mean of 3.73, making for a 5% difference in sample means between the two groups. The Annual sample size was slightly smaller (by two data points), and had a 10% larger standard deviation. This is consistent with the less-than-normal distribution observed in the histogram we created for this sample. 
+
+>The p-value of our two-sample t-test was 0.2536, indicating a 25% probability that the two sample groups (Annual and Control) were pulled from the same larger population (Naples Reef in January 2010). Our data leads us to affirm the null hypothesis (despite the risk of performing a Type II error).
+
+
+
+
+
+
+
+
+
